@@ -1,8 +1,8 @@
 import os
 from flask import Flask, render_template, request, jsonify
-import openai
+from openai import OpenAI
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = Flask(__name__)
 
@@ -18,17 +18,16 @@ def ask():
         return jsonify({"error": "No website provided"}), 400
 
     try:
-        prompt = f"Provide a short, helpful response about the website: {website}"
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+        completion = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that comments on websites."},
-                {"role": "user", "content": prompt}
+                {"role": "user", "content": f"Provide a short, helpful response about the website: {website}"}
             ],
             max_tokens=150,
             temperature=0.7,
         )
-        text = response.choices[0].message.content.strip()
+        text = completion.choices[0].message.content.strip()
         return jsonify({"response": text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
