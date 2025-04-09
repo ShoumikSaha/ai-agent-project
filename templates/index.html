@@ -35,7 +35,7 @@
     .hidden         { display:none; }
 
     /* compact bar chart */
-    #decisionChart  { max-width:100px; margin-top:10px; }
+    #decisionChart  { max-height:50px; margin-top:10px;}
   </style>
 </head>
 <body>
@@ -151,7 +151,7 @@
             responsive:true,
             maintainAspectRatio:true,   // let the 55‑px height stand
             plugins:{
-                legend:{display:true},
+                legend:{display:false},
                 tooltip:{callbacks:{label:c=>c.parsed.x + '%'}}
             },
             scales:{
