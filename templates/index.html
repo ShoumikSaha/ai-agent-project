@@ -1,24 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>AI Website Commenter</title>
-    <script defer src="/static/main.js"></script>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Stock Predictor</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; }
-        input[type=url] { width: 100%; padding: 0.5rem; margin-top: 0.5rem; }
-        button { padding: 0.5rem 1rem; margin-top: 0.5rem; }
-        pre { background: #f6f8fa; padding: 1rem; white-space: pre-wrap; }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+      }
+      h1 {
+        text-align: center;
+        margin: 1rem 0;
+      }
+      .container {
+        display: flex;
+        flex-direction: row;
+        height: 80vh;
+        margin: 0 2rem;
+      }
+      .left-panel {
+        width: 30%;
+        border-right: 1px solid #ccc;
+        padding: 1rem;
+      }
+      .right-panel {
+        width: 70%;
+        padding: 1rem;
+      }
+      .stock-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .stock-option {
+        margin-bottom: 0.5rem;
+      }
+      .other-stock-input {
+        margin-left: 1.5rem;
+      }
+      .analyze-btn {
+        margin: 1rem 0;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+      }
+      .response-box {
+        border: 1px solid #ccc;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      .toggle-explanation {
+        margin-top: 0.5rem;
+        cursor: pointer;
+      }
+      .hidden {
+        display: none;
+      }
     </style>
-</head>
-<body>
-    <h1>AI Website Commenter</h1>
-    <form id="website-form">
-        <label for="website">Enter a website URL:</label>
-        <input type="url" id="website" name="website" placeholder="https://example.com" required>
-        <button type="submit">Ask AI</button>
-    </form>
-    <h2>Response</h2>
-    <pre id="response"></pre>
-</body>
+  </head>
+  <body>
+    <h1>AI Stock Predictor</h1>
+    <div class="container">
+      <!-- Left Panel: list of stocks (radio buttons) -->
+      <div class="left-panel">
+        <div class="stock-list" id="stockList">
+          <!-- Example built-in stock options -->
+          <label class="stock-option">
+            <input type="radio" name="stock" value="AAPL" checked />
+            AAPL (Apple)
+          </label>
+          <label class="stock-option">
+            <input type="radio" name="stock" value="GOOGL" />
+            GOOGL (Alphabet)
+          </label>
+          <label class="stock-option">
+            <input type="radio" name="stock" value="MSFT" />
+            MSFT (Microsoft)
+          </label>
+          <label class="stock-option">
+            <input type="radio" name="stock" value="AMZN" />
+            AMZN (Amazon)
+          </label>
+          <label class="stock-option">
+            <input type="radio" name="stock" value="OTHER" />
+            Other:
+            <input class="other-stock-input" type="text" id="otherStock" placeholder="Enter stock name" disabled />
+          </label>
+        </div>
+      </div>
+
+      <!-- Right Panel: button + results -->
+      <div class="right-panel">
+        <button id="analyzeBtn" class="analyze-btn">Analyze</button>
+        
+        <div id="responseBox" class="response-box hidden">
+          <p><strong>Short Summary:</strong> <span id="shortSummary"></span></p>
+          <div>
+            <label>
+              <input type="checkbox" id="toggleExplanation" class="toggle-explanation" />
+              Explanation
+            </label>
+          </div>
+          <p id="detailedExplanation" class="hidden"></p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Enable/disable the "other stock" text input
+      const stockList = document.getElementById('stockList');
+      const otherStockInput = document.getElementById('otherStock');
+
+      stockList.addEventListener('change', (event) => {
+        const value = event.target.value;
+        if (value === 'OTHER') {
+          otherStockInput.disabled = false;
+        } else {
+          otherStockInput.disabled = true;
+          otherStockInput.value = '';
+        }
+      });
+
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const responseBox = document.getElementById('responseBox');
+      const shortSummaryEl = document.getElementById('shortSummary');
+      const detailedExplanationEl = document.getElementById('detailedExplanation');
+      const toggleExplanation = document.getElementById('toggleExplanation');
+
+      // Hide/show the detailed explanation
+      toggleExplanation.addEventListener('change', () => {
+        if (toggleExplanation.checked) {
+          detailedExplanationEl.classList.remove('hidden');
+        } else {
+          detailedExplanationEl.classList.add('hidden');
+        }
+      });
+
+      analyzeBtn.addEventListener('click', async () => {
+        // Find the selected radio
+        const selectedRadio = document.querySelector('input[name="stock"]:checked');
+        let stockName = selectedRadio.value;
+        if (stockName === 'OTHER') {
+          // use the text from otherStock
+          stockName = otherStockInput.value.trim() || 'Unknown Stock';
+        }
+
+        // POST to our Flask endpoint
+        try {
+          const resp = await fetch('/analyze_stock', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ stock: stockName })
+          });
+          const data = await resp.json();
+
+          if (data.error) {
+            shortSummaryEl.textContent = "Error: " + data.error;
+            detailedExplanationEl.textContent = "";
+          } else {
+            shortSummaryEl.textContent = data.short_summary;
+            detailedExplanationEl.textContent = data.detailed_explanation;
+          }
+          // Show the response box
+          responseBox.classList.remove('hidden');
+          // Uncheck explanation toggle & hide explanation initially
+          toggleExplanation.checked = false;
+          detailedExplanationEl.classList.add('hidden');
+        } catch (e) {
+          shortSummaryEl.textContent = "Error: " + e.toString();
+          detailedExplanationEl.textContent = "";
+          responseBox.classList.remove('hidden');
+        }
+      });
+    </script>
+  </body>
 </html>
