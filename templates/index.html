@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <title>AI Stock Predictor</title>
 
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
   <style>
     body{margin:0;font-family:sans-serif;}
     h1 {text-align:center;margin:1rem 0;}
@@ -16,39 +19,34 @@
     .stock-option{margin-bottom:.5rem;}
     .other-stock-input{margin-left:1rem;}
 
-    /* ── action row (button + spinner) ── */
+    /* button + spinner */
     .action-row{display:flex;align-items:center;}
     .analyze-btn{width:150px;padding:.6rem 1rem;cursor:pointer;}
 
-    /* ── small spinner ── */
+    /* small spinner */
     .spinner{
-      border:3px solid #f3f3f3;
-      border-top:3px solid #555;
-      border-radius:50%;
-      width:18px;height:18px;
-      animation:spin 1s linear infinite;
-      margin-left:8px;
+      border:3px solid #f3f3f3;border-top:3px solid #555;border-radius:50%;
+      width:18px;height:18px;animation:spin 1s linear infinite;margin-left:8px;
     }
     @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 
     .response-box{border:1px solid #ccc;padding:1rem;margin-top:1rem;}
     .hidden{display:none;}
+    canvas{max-width:400px;margin-top:10px;}
   </style>
 </head>
 <body>
   <h1>AI Stock Predictor</h1>
 
   <div class="container">
-    <!-- ─── Left Panel ─── -->
+    <!-- LEFT PANEL (full ticker list retained) -->
     <div class="left-panel">
       <div class="stock-list" id="stockList">
-        <!-- Core tech giants -->
         <label class="stock-option"><input type="radio" name="stock" value="AAPL" checked /> AAPL (Apple)</label>
         <label class="stock-option"><input type="radio" name="stock" value="GOOGL" /> GOOGL (Alphabet)</label>
         <label class="stock-option"><input type="radio" name="stock" value="MSFT" /> MSFT (Microsoft)</label>
         <label class="stock-option"><input type="radio" name="stock" value="AMZN" /> AMZN (Amazon)</label>
 
-        <!-- Extra tickers -->
         <label class="stock-option"><input type="radio" name="stock" value="NFLX" /> NFLX (Netflix)</label>
         <label class="stock-option"><input type="radio" name="stock" value="PLTR" /> PLTR (Palantir)</label>
         <label class="stock-option"><input type="radio" name="stock" value="PYPL" /> PYPL (PayPal)</label>
@@ -62,7 +60,6 @@
         <label class="stock-option"><input type="radio" name="stock" value="AMD"  /> AMD (AMD)</label>
         <label class="stock-option"><input type="radio" name="stock" value="SPY"  /> SPY (S&P 500 ETF)</label>
 
-        <!-- Other -->
         <label class="stock-option">
           <input type="radio" name="stock" value="OTHER" id="radioOther" />
           Other: <input type="text" id="otherStock" class="other-stock-input" placeholder="Enter symbol" disabled />
@@ -70,9 +67,8 @@
       </div>
     </div>
 
-    <!-- ─── Right Panel ─── -->
+    <!-- RIGHT PANEL -->
     <div class="right-panel">
-      <!-- button + spinner side‑by‑side -->
       <div class="action-row">
         <button id="analyzeBtn" class="analyze-btn">Analyze</button>
         <div id="spinner" class="spinner hidden"></div>
@@ -80,6 +76,8 @@
 
       <div id="responseBox" class="response-box hidden">
         <p><strong>Decision:</strong> <span id="decisionText"></span></p>
+        <canvas id="decisionChart" class="hidden"></canvas>
+
         <label><input type="checkbox" id="toggleExplanation" /> Explanation</label>
         <p id="explanationText" class="hidden"></p>
       </div>
@@ -87,7 +85,13 @@
   </div>
 
   <script>
-    /* element refs */
+    /* ─── helpers ─── */
+    const mdToHtml = t => t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    const colorsFor = lbl => ({
+      Buy:'#4CAF50', Sell:'#F44336', Hold:'#9E9E9E'
+    }[lbl] || '#2196F3');
+
+    /* ─── element refs ─── */
     const stockList   = document.getElementById('stockList');
     const otherInput  = document.getElementById('otherStock');
     const radioOther  = document.getElementById('radioOther');
@@ -97,8 +101,11 @@
     const decisionEl  = document.getElementById('decisionText');
     const explainEl   = document.getElementById('explanationText');
     const toggleExp   = document.getElementById('toggleExplanation');
+    const chartCanvas = document.getElementById('decisionChart');
 
-    /* enable / disable "Other" */
+    let chartInstance=null;
+
+    /* enable / disable Other */
     stockList.addEventListener('change', e=>{
       if(!e.target.matches('input[type="radio"][name="stock"]'))return;
       const isOther=e.target.value==='OTHER';
@@ -110,13 +117,30 @@
       otherInput.disabled=false;
     });
 
-    /* tiny markdown converter */
-    const mdToHtml=txt=>txt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-
-    /* toggle explanation */
     toggleExp.addEventListener('change',e=>{
       explainEl.classList.toggle('hidden',!e.target.checked);
     });
+
+    function renderChart(decVals){
+      const labels = Object.keys(decVals);
+      const data   = labels.map(k=>decVals[k]);
+      const bg     = labels.map(colorsFor);
+
+      if(chartInstance){ chartInstance.destroy(); }
+      chartInstance = new Chart(chartCanvas,{
+        type:'bar',
+        data:{ labels,
+          datasets:[{ data, backgroundColor:bg }]
+        },
+        options:{
+          indexAxis:'y',
+          responsive:true,
+          plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}} },
+          scales:{ x:{ beginAtZero:true, max:100, ticks:{callback:v=>v+'%'} } }
+        }
+      });
+      chartCanvas.classList.remove('hidden');
+    }
 
     /* ANALYZE */
     analyzeBtn.addEventListener('click',async()=>{
@@ -125,17 +149,22 @@
 
       spinner.classList.remove('hidden');
       responseBox.classList.add('hidden');
+      chartCanvas.classList.add('hidden');
 
       try{
         const res=await fetch('/analyze_stock',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+          method:'POST', headers:{'Content-Type':'application/json'},
           body:JSON.stringify({stock})
         });
         const data=await res.json();
 
         decisionEl.textContent=data.error||data.decision;
         explainEl.innerHTML=mdToHtml(data.explanation||'');
+
+        if(data.decision_values && Object.keys(data.decision_values).length){
+          renderChart(data.decision_values);
+        }
+
         spinner.classList.add('hidden');
         responseBox.classList.remove('hidden');
         toggleExp.checked=false;

@@ -48,31 +48,54 @@ def analyze_stock():
         ],
     )
 
-    raw_text = response.choices[0].message.content.strip()
+    raw = response.choices[0].message.content.strip()
 
     # ---- Robust JSON extraction -----------------------------------------
-    # The model might wrap JSON in markdown fences; strip them if present.
-    if raw_text.startswith("```"):
-        raw_text = raw_text.strip("`")              # remove back‑ticks
-        first_brace = raw_text.find("{")
-        raw_text = raw_text[first_brace : raw_text.rfind("}") + 1]
+    # # The model might wrap JSON in markdown fences; strip them if present.
+    # if raw_text.startswith("```"):
+    #     raw_text = raw_text.strip("`")              # remove back‑ticks
+    #     first_brace = raw_text.find("{")
+    #     raw_text = raw_text[first_brace : raw_text.rfind("}") + 1]
+
+    # try:
+    #     obj = json.loads(raw_text)
+    # except json.JSONDecodeError:
+    #     # fallback: return raw text so the UI shows something
+    #     return jsonify(
+    #         decision="(Could not parse JSON)\n" + raw_text,
+    #         explanation=""
+    #     )
+
+    # decision_dict = obj.get("Decision", {})
+    # decision_str  = ", ".join(f"{k}: {v}" for k, v in decision_dict.items())
+    # explanation   = obj.get("Explanation", "")
+
+    # return jsonify(
+    #     decision=decision_str,
+    #     explanation=explanation,
+    # )
+
+    # strip markdown fences if present
+    if raw.startswith("```"):
+        raw = raw.strip("`")
+        raw = raw[raw.find("{"): raw.rfind("}") + 1]
 
     try:
-        obj = json.loads(raw_text)
+        obj = json.loads(raw)
     except json.JSONDecodeError:
-        # fallback: return raw text so the UI shows something
-        return jsonify(
-            decision="(Could not parse JSON)\n" + raw_text,
-            explanation=""
-        )
+        return jsonify(decision="Parse‑error", explanation=raw, decision_values={})
 
-    decision_dict = obj.get("Decision", {})
-    decision_str  = ", ".join(f"{k}: {v}" for k, v in decision_dict.items())
-    explanation   = obj.get("Explanation", "")
+    dec_dict = obj.get("Decision", {})
+    # convert "70%" → 70  (float)
+    dec_vals = {k: float(v.replace("%", "").strip()) for k, v in dec_dict.items() if v}
+
+    # pretty one‑liner string
+    dec_str = ", ".join(f"{k}: {int(v)}%" for k, v in dec_vals.items())
 
     return jsonify(
-        decision=decision_str,
-        explanation=explanation,
+        decision=dec_str,
+        decision_values=dec_vals,   # <‑‑ new!
+        explanation=obj.get("Explanation", "")
     )
 
 if __name__ == "__main__":
