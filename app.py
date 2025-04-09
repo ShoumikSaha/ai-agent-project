@@ -3,11 +3,8 @@ from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
 
 app = Flask(__name__)
-
-# ---------- OpenAI client ----------
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# ---------- System prompt ----------
 SYSTEM_PROMPT = (
     "You are a seasoned financial analyst. "
     "For any stock requested, you must return:\n"
@@ -22,45 +19,30 @@ def index():
 
 @app.route("/analyze_stock", methods=["POST"])
 def analyze_stock():
-    data = request.json or {}
-    selected_stock = data.get("stock", "").strip() or "Unknown Stock"
+    stock = (request.json or {}).get("stock", "").strip() or "Unknown Stock"
 
-    user_prompt = (
-        f"Generate the required short summary and detailed explanation for {selected_stock}."
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": f"Generate the required short summary and detailed explanation for {stock}."},
+        ],
     )
 
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
+    text = response.choices[0].message.content.strip()
 
-        ai_text = response.choices[0].message.content.strip()
+    # quick‑and‑dirty parsing
+    short, detail = "No short summary found.", "No detailed explanation found."
+    if "Short summary:" in text and "Detailed explanation:" in text:
+        short, detail = text.split("Detailed explanation:", 1)
+        short = short.replace("Short summary:", "").strip()
+        detail = detail.strip()
+    else:
+        lines = text.splitlines()
+        if lines:
+            short, detail = lines[0].strip(), " ".join(lines[1:]).strip()
 
-        # ---- Parse model output ----
-        short_summary = "No short summary found."
-        detailed_explanation = "No detailed explanation found."
-
-        if "Short summary:" in ai_text and "Detailed explanation:" in ai_text:
-            summary_part, detail_part = ai_text.split("Detailed explanation:", 1)
-            short_summary = summary_part.replace("Short summary:", "").strip()
-            detailed_explanation = detail_part.strip()
-        else:
-            lines = ai_text.splitlines()
-            if lines:
-                short_summary = lines[0].strip()
-                detailed_explanation = " ".join(lines[1:]).strip()
-
-        return jsonify(
-            short_summary=short_summary,
-            detailed_explanation=detailed_explanation,
-        )
-
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+    return jsonify(short_summary=short, detailed_explanation=detail)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

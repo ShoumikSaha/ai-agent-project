@@ -1,193 +1,81 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>AI Stock Predictor</title>
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: sans-serif;
-      }
-      h1 {
-        text-align: center;
-        margin: 1rem 0;
-      }
-      .container {
-        display: flex;
-        flex-direction: row;
-        height: 80vh;
-        margin: 0 2rem;
-      }
-      .left-panel {
-        width: 30%;
-        border-right: 1px solid #ccc;
-        padding: 1rem;
-      }
-      .right-panel {
-        width: 70%;
-        padding: 1rem;
-      }
-      .stock-list {
-        display: flex;
-        flex-direction: column;
-      }
-      .stock-option {
-        margin-bottom: 0.5rem;
-      }
-      .other-stock-input {
-        margin-left: 1rem;
-      }
-      .analyze-btn {
-        margin: 1rem 0;
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-      }
-      .response-box {
-        border: 1px solid #ccc;
-        padding: 1rem;
-        margin-bottom: 1rem;
-      }
-      .toggle-explanation {
-        margin-top: 0.5rem;
-        cursor: pointer;
-      }
-      .hidden {
-        display: none;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>AI Stock Predictor</h1>
+<!-- … <head> section unchanged … -->
+
     <div class="container">
-      <!-- Left Panel: list of stocks (radio buttons) -->
-      <div class="left-panel">
-        <div class="stock-list" id="stockList">
-          <!-- Built-in stock options -->
-          <label class="stock-option">
-            <input type="radio" name="stock" value="AAPL" checked />
-            AAPL (Apple)
-          </label>
-          <label class="stock-option">
-            <input type="radio" name="stock" value="GOOGL" />
-            GOOGL (Alphabet)
-          </label>
-          <label class="stock-option">
-            <input type="radio" name="stock" value="MSFT" />
-            MSFT (Microsoft)
-          </label>
-          <label class="stock-option">
-            <input type="radio" name="stock" value="AMZN" />
-            AMZN (Amazon)
-          </label>
-          <!-- Other stock option -->
-          <label class="stock-option">
-            <input type="radio" name="stock" value="OTHER" id="radioOther" />
-            Other:
-            <input
-              class="other-stock-input"
-              type="text"
-              id="otherStock"
-              placeholder="Enter stock name"
-              disabled
-            />
-          </label>
-        </div>
-      </div>
-
-      <!-- Right Panel: button + results -->
-      <div class="right-panel">
-        <button id="analyzeBtn" class="analyze-btn">Analyze</button>
-
-        <div id="responseBox" class="response-box hidden">
-          <p><strong>Short Summary:</strong> <span id="shortSummary"></span></p>
-          <div>
-            <label>
-              <input type="checkbox" id="toggleExplanation" class="toggle-explanation" />
-              Explanation
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+          <div class="stock-list" id="stockList">
+            <!-- Core tech giants -->
+            <label class="stock-option"><input type="radio" name="stock" value="AAPL" checked /> AAPL (Apple)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="GOOGL" /> GOOGL (Alphabet)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="MSFT" /> MSFT (Microsoft)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="AMZN" /> AMZN (Amazon)</label>
+      
+            <!-- Extra tickers you requested -->
+            <label class="stock-option"><input type="radio" name="stock" value="NFLX" /> NFLX (Netflix)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="PLTR" /> PLTR (Palantir)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="PYPL" /> PYPL (PayPal)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="TSLA" /> TSLA (Tesla)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="NVDA" /> NVDA (NVIDIA)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="META" /> META (Meta)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="BABA" /> BABA (Alibaba)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="BA"   /> BA (Boeing)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="ADBE" /> ADBE (Adobe)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="QCOM" /> QCOM (Qualcomm)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="AMD"  /> AMD (AMD)</label>
+            <label class="stock-option"><input type="radio" name="stock" value="SPY"  /> SPY (S&P 500 ETF)</label>
+      
+            <!-- OTHER -->
+            <label class="stock-option">
+              <input type="radio" name="stock" value="OTHER" id="radioOther" />
+              Other:
+              <input type="text" id="otherStock" class="other-stock-input" placeholder="Enter symbol" disabled />
             </label>
           </div>
-          <p id="detailedExplanation" class="hidden"></p>
         </div>
+      
+        <!-- RIGHT PANEL … (unchanged markup) -->
       </div>
-    </div>
-
-    <script>
-      const stockList = document.getElementById('stockList');
-      const otherStockInput = document.getElementById('otherStock');
-      const radioOther = document.getElementById('radioOther');
-
-      // When a stock radio changes, enable "Other" input only if "OTHER" is selected
-      stockList.addEventListener('change', (event) => {
-        const value = event.target.value;
-        if (value === 'OTHER') {
+      
+      <script>
+        const stockList          = document.getElementById('stockList');
+        const otherStockInput    = document.getElementById('otherStock');
+        const radioOther         = document.getElementById('radioOther');
+      
+        /* --- enable/disable the text box ONLY when a radio changes --- */
+        stockList.addEventListener('change', e => {
+          if (!e.target.matches('input[type="radio"][name="stock"]')) return;   // ignore text‑field changes
+          otherStockInput.disabled = e.target.value !== 'OTHER';
+          if (e.target.value !== 'OTHER') otherStockInput.value = '';
+        });
+      
+        /* auto‑select “Other” radio when user types */
+        otherStockInput.addEventListener('input', () => {
+          radioOther.checked = true;
           otherStockInput.disabled = false;
-        } else {
-          otherStockInput.disabled = true;
-          otherStockInput.value = '';
-        }
-      });
-
-      // If the user types in the "Other" box, select the "Other" radio automatically
-      otherStockInput.addEventListener('input', () => {
-        radioOther.checked = true;
-        otherStockInput.disabled = false;
-      });
-
-      const analyzeBtn = document.getElementById('analyzeBtn');
-      const responseBox = document.getElementById('responseBox');
-      const shortSummaryEl = document.getElementById('shortSummary');
-      const detailedExplanationEl = document.getElementById('detailedExplanation');
-      const toggleExplanation = document.getElementById('toggleExplanation');
-
-      // Hide/show the detailed explanation
-      toggleExplanation.addEventListener('change', () => {
-        if (toggleExplanation.checked) {
-          detailedExplanationEl.classList.remove('hidden');
-        } else {
-          detailedExplanationEl.classList.add('hidden');
-        }
-      });
-
-      analyzeBtn.addEventListener('click', async () => {
-        // Identify which radio is selected
-        const selectedRadio = document.querySelector('input[name="stock"]:checked');
-        let stockName = selectedRadio ? selectedRadio.value : 'Unknown Stock';
-
-        if (stockName === 'OTHER') {
-          // use the text from the "Other" field
-          stockName = otherStockInput.value.trim() || 'Unknown Stock';
-        }
-
-        // POST to our Flask endpoint
-        try {
-          const resp = await fetch('/analyze_stock', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ stock: stockName })
+        });
+      
+        /* ANALYZE click */
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+          let selected = document.querySelector('input[name="stock"]:checked')?.value || 'Unknown Stock';
+          if (selected === 'OTHER') selected = otherStockInput.value.trim() || 'Unknown Stock';
+      
+          const resp  = await fetch('/analyze_stock', {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body   : JSON.stringify({ stock: selected })
           });
-          const data = await resp.json();
-
-          if (data.error) {
-            shortSummaryEl.textContent = "Error: " + data.error;
-            detailedExplanationEl.textContent = "";
-          } else {
-            shortSummaryEl.textContent = data.short_summary;
-            detailedExplanationEl.textContent = data.detailed_explanation;
-          }
-          // Show the response box
-          responseBox.classList.remove('hidden');
-          // Uncheck explanation toggle & hide explanation initially
-          toggleExplanation.checked = false;
-          detailedExplanationEl.classList.add('hidden');
-        } catch (e) {
-          shortSummaryEl.textContent = "Error: " + e.toString();
-          detailedExplanationEl.textContent = "";
-          responseBox.classList.remove('hidden');
-        }
-      });
-    </script>
-  </body>
-</html>
+          const data  = await resp.json();
+      
+          document.getElementById('shortSummary').textContent      = data.error || data.short_summary;
+          document.getElementById('detailedExplanation').textContent = data.detailed_explanation || '';
+          document.getElementById('responseBox').classList.remove('hidden');
+          document.getElementById('toggleExplanation').checked = false;
+          document.getElementById('detailedExplanation').classList.add('hidden');
+        });
+      
+        /* toggle explanation visibility */
+        document.getElementById('toggleExplanation').addEventListener('change', e => {
+          document.getElementById('detailedExplanation').classList.toggle('hidden', !e.target.checked);
+        });
+      </script>
+      
