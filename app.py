@@ -34,9 +34,7 @@ def analyze_stock():
         'about buying a stock, you can give "Buy: 80%, Sell: 10%, Hold: 10%". '
         "Do not provide anything else with the 'Decision:'. "
         "Finally, provide a detailed reasoning and explanation for your given decision. "
-        "Label this with 'Explanation:'. Remember, under 'Decision:', do not provide "
-        "anything else other than the decision. Any reasoning or explanation will go "
-        "with 'Explanation:'."
+        "Label this with 'Explanation:'. "
     ).format(stock=stock)
 
     response = client.chat.completions.create(
