@@ -35,7 +35,7 @@
     .hidden         { display:none; }
 
     /* compact bar chart */
-    #decisionChart  { max-width:400px; margin-top:10px; }
+    #decisionChart  { max-width:100px; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -151,7 +151,7 @@
             responsive:true,
             maintainAspectRatio:true,   // let the 55‑px height stand
             plugins:{
-                legend:{display:false},
+                legend:{display:true},
                 tooltip:{callbacks:{label:c=>c.parsed.x + '%'}}
             },
             scales:{
@@ -161,7 +161,7 @@
                 ticks:{ callback:v=>v + '%' }
                 },
                 y:{
-                ticks:{display:false},   // hide Buy/Sell/Hold text if you want max compactness
+                ticks:{display:true},   // hide Buy/Sell/Hold text if you want max compactness
                 grid :{display:false}
                 }
             }
