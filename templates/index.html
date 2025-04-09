@@ -127,30 +127,48 @@
 
     /* draw horizontal bar chart */
     function renderChart(values){
-      const labels = Object.keys(values);
-      const data   = labels.map(l=>values[l]);
-      const colors = {Buy:'#4CAF50', Sell:'#F44336', Hold:'#9E9E9E'};
-      const bg     = labels.map(l=>colors[l] || '#2196F3');
+        const labels = Object.keys(values);
+        const data   = labels.map(l=>values[l]);
+        const colors = {Buy:'#4CAF50', Sell:'#F44336', Hold:'#9E9E9E'};
+        const bg     = labels.map(l=>colors[l] || '#2196F3');
 
-      if(chartInstance) chartInstance.destroy();
+        if(chartInstance) chartInstance.destroy();
 
-      chartInstance = new Chart(chartCanvas, {
-        type:'bar',
-        data:{ labels, datasets:[{ data, backgroundColor:bg, barThickness:18 }] },
-        options:{
-          indexAxis:'y',
-          responsive:true,
-          maintainAspectRatio:false,   /* use fixed height (110 px) */
-          plugins:{
-            legend:{display:false},
-            tooltip:{callbacks:{label:c=>c.parsed.x + '%'}}
-          },
-          scales:{
-            x:{ beginAtZero:true, max:100, ticks:{ callback:v=>v + '%' } }
-          }
-        }
-      });
-      chartCanvas.classList.remove('hidden');
+        chartInstance = new Chart(chartCanvas,{
+            type:'bar',
+            data:{
+            labels,
+            datasets:[{
+                data,
+                backgroundColor:bg,
+                /* thinner bars ↓↓↓ */
+                barThickness:10,         // 10‑12 px works well in a 55‑px canvas
+                categoryPercentage:0.5   // reduces vertical spacing between bars
+            }]
+            },
+            options:{
+            indexAxis:'y',
+            responsive:true,
+            maintainAspectRatio:false,   // let the 55‑px height stand
+            plugins:{
+                legend:{display:false},
+                tooltip:{callbacks:{label:c=>c.parsed.x + '%'}}
+            },
+            scales:{
+                x:{
+                beginAtZero:true,
+                max:100,
+                ticks:{ callback:v=>v + '%' }
+                },
+                y:{
+                ticks:{display:false},   // hide Buy/Sell/Hold text if you want max compactness
+                grid :{display:false}
+                }
+            }
+            }
+        });
+
+        chartCanvas.classList.remove('hidden');
     }
 
     /* ANALYZE click */
