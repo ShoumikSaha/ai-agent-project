@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>AI Stock Predictor</title>
+
   <style>
     body{margin:0;font-family:sans-serif;}
     h1 {text-align:center;margin:1rem 0;}
@@ -15,33 +16,53 @@
     .stock-option{margin-bottom:.5rem;}
     .other-stock-input{margin-left:1rem;}
 
+    /* ── action row (button + spinner) ── */
+    .action-row{display:flex;align-items:center;}
     .analyze-btn{width:150px;padding:.6rem 1rem;cursor:pointer;}
-    .response-box{border:1px solid #ccc;padding:1rem;margin-top:1rem;}
-    .hidden{display:none;}
 
-    /* ── spinner ── */
+    /* ── small spinner ── */
     .spinner{
-      border:4px solid #f3f3f3;
-      border-top:4px solid #555;
+      border:3px solid #f3f3f3;
+      border-top:3px solid #555;
       border-radius:50%;
-      width:40px;height:40px;
+      width:18px;height:18px;
       animation:spin 1s linear infinite;
-      margin:1.5rem auto 0 auto;
+      margin-left:8px;
     }
     @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+    .response-box{border:1px solid #ccc;padding:1rem;margin-top:1rem;}
+    .hidden{display:none;}
   </style>
 </head>
 <body>
   <h1>AI Stock Predictor</h1>
 
   <div class="container">
-    <!-- LEFT PANEL -->
+    <!-- ─── Left Panel ─── -->
     <div class="left-panel">
       <div class="stock-list" id="stockList">
-        <!-- (tickers omitted for brevity; keep the same list you already have) -->
-        <!-- Example: -->
+        <!-- Core tech giants -->
         <label class="stock-option"><input type="radio" name="stock" value="AAPL" checked /> AAPL (Apple)</label>
-        <!-- ... all other tickers ... -->
+        <label class="stock-option"><input type="radio" name="stock" value="GOOGL" /> GOOGL (Alphabet)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="MSFT" /> MSFT (Microsoft)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="AMZN" /> AMZN (Amazon)</label>
+
+        <!-- Extra tickers -->
+        <label class="stock-option"><input type="radio" name="stock" value="NFLX" /> NFLX (Netflix)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="PLTR" /> PLTR (Palantir)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="PYPL" /> PYPL (PayPal)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="TSLA" /> TSLA (Tesla)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="NVDA" /> NVDA (NVIDIA)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="META" /> META (Meta)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="BABA" /> BABA (Alibaba)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="BA"   /> BA (Boeing)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="ADBE" /> ADBE (Adobe)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="QCOM" /> QCOM (Qualcomm)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="AMD"  /> AMD (AMD)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="SPY"  /> SPY (S&P 500 ETF)</label>
+
+        <!-- Other -->
         <label class="stock-option">
           <input type="radio" name="stock" value="OTHER" id="radioOther" />
           Other: <input type="text" id="otherStock" class="other-stock-input" placeholder="Enter symbol" disabled />
@@ -49,11 +70,13 @@
       </div>
     </div>
 
-    <!-- RIGHT PANEL -->
+    <!-- ─── Right Panel ─── -->
     <div class="right-panel">
-      <button id="analyzeBtn" class="analyze-btn">Analyze</button>
-
-      <div id="spinner" class="spinner hidden"></div>
+      <!-- button + spinner side‑by‑side -->
+      <div class="action-row">
+        <button id="analyzeBtn" class="analyze-btn">Analyze</button>
+        <div id="spinner" class="spinner hidden"></div>
+      </div>
 
       <div id="responseBox" class="response-box hidden">
         <p><strong>Decision:</strong> <span id="decisionText"></span></p>
@@ -87,7 +110,7 @@
       otherInput.disabled=false;
     });
 
-    /* tiny markdown converter: bold + line breaks */
+    /* tiny markdown converter */
     const mdToHtml=txt=>txt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
 
     /* toggle explanation */
@@ -100,9 +123,8 @@
       let stock=document.querySelector('input[name="stock"]:checked')?.value||'Unknown Stock';
       if(stock==='OTHER')stock=otherInput.value.trim()||'Unknown Stock';
 
-      // UI: show spinner, hide old response
-      responseBox.classList.add('hidden');
       spinner.classList.remove('hidden');
+      responseBox.classList.add('hidden');
 
       try{
         const res=await fetch('/analyze_stock',{
