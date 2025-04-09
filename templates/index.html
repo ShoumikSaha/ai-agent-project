@@ -1,139 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>AI Stock Predictor</title>
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Stock Predictor</title>
+  <style>
+    body { margin:0; font-family:sans-serif; }
+    h1  { text-align:center; margin:1rem 0; }
+    .container   { display:flex; height:80vh; margin:0 2rem; }
+    .left-panel  { width:30%; border-right:1px solid #ccc; padding:1rem; overflow-y:auto; }
+    .right-panel { width:70%; padding:1rem; display:flex; flex-direction:column; }
+    .stock-list  { display:flex; flex-direction:column; }
+    .stock-option{ margin-bottom:.5rem; }
+    .other-stock-input { margin-left:1rem; }
+    .analyze-btn { width:150px; padding:.6rem 1rem; cursor:pointer; }
+    .response-box{ border:1px solid #ccc; padding:1rem; margin-top:1rem; }
+    .hidden      { display:none; }
+  </style>
+</head>
+<body>
+  <h1>AI Stock Predictor</h1>
 
-    <style>
-      body { margin: 0; font-family: sans-serif; }
-      h1  { text-align: center; margin: 1rem 0; }
+  <div class="container">
+    <!-- ─── Left Panel ─── -->
+    <div class="left-panel">
+      <div class="stock-list" id="stockList">
+        <!-- Core + extra tickers -->
+        <label class="stock-option"><input type="radio" name="stock" value="AAPL" checked /> AAPL (Apple)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="GOOGL" /> GOOGL (Alphabet)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="MSFT" /> MSFT (Microsoft)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="AMZN" /> AMZN (Amazon)</label>
 
-      /* --- layout --- */
-      .container     { display: flex; height: 80vh; margin: 0 2rem; }
-      .left-panel    { width: 30%; border-right: 1px solid #ccc; padding: 1rem; overflow-y: auto; }
-      .right-panel   { width: 70%; padding: 1rem; display: flex; flex-direction: column; }
+        <label class="stock-option"><input type="radio" name="stock" value="NFLX" /> NFLX (Netflix)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="PLTR" /> PLTR (Palantir)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="PYPL" /> PYPL (PayPal)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="TSLA" /> TSLA (Tesla)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="NVDA" /> NVDA (NVIDIA)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="META" /> META (Meta)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="BABA" /> BABA (Alibaba)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="BA"   /> BA (Boeing)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="ADBE" /> ADBE (Adobe)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="QCOM" /> QCOM (Qualcomm)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="AMD"  /> AMD (AMD)</label>
+        <label class="stock-option"><input type="radio" name="stock" value="SPY"  /> SPY (S&P 500 ETF)</label>
 
-      /* --- left panel --- */
-      .stock-list    { display: flex; flex-direction: column; }
-      .stock-option  { margin-bottom: 0.5rem; }
-      .other-stock-input { margin-left: 1rem; }
-
-      /* --- right panel --- */
-      .analyze-btn   { width: 150px; padding: 0.6rem 1rem; cursor: pointer; }
-      .response-box  { border: 1px solid #ccc; padding: 1rem; margin-top: 1rem; }
-      .toggle-explanation { margin-top: 0.5rem; cursor: pointer; }
-
-      .hidden { display: none; }
-    </style>
-  </head>
-
-  <body>
-    <h1>AI Stock Predictor</h1>
-
-    <div class="container">
-      <!-- ───── Left Panel ───── -->
-      <div class="left-panel">
-        <div class="stock-list" id="stockList">
-          <!-- Core tech giants -->
-          <label class="stock-option"><input type="radio" name="stock" value="AAPL" checked /> AAPL (Apple)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="GOOGL" /> GOOGL (Alphabet)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="MSFT" /> MSFT (Microsoft)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="AMZN" /> AMZN (Amazon)</label>
-
-          <!-- Extra tickers -->
-          <label class="stock-option"><input type="radio" name="stock" value="NFLX" /> NFLX (Netflix)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="PLTR" /> PLTR (Palantir)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="PYPL" /> PYPL (PayPal)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="TSLA" /> TSLA (Tesla)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="NVDA" /> NVDA (NVIDIA)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="META" /> META (Meta)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="BABA" /> BABA (Alibaba)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="BA"   /> BA (Boeing)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="ADBE" /> ADBE (Adobe)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="QCOM" /> QCOM (Qualcomm)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="AMD"  /> AMD (AMD)</label>
-          <label class="stock-option"><input type="radio" name="stock" value="SPY"  /> SPY (S&P 500 ETF)</label>
-
-          <!-- Other -->
-          <label class="stock-option">
-            <input type="radio" name="stock" value="OTHER" id="radioOther" />
-            Other:
-            <input type="text" id="otherStock" class="other-stock-input" placeholder="Enter symbol" disabled />
-          </label>
-        </div>
-      </div>
-
-      <!-- ───── Right Panel ───── -->
-      <div class="right-panel">
-        <button id="analyzeBtn" class="analyze-btn">Analyze</button>
-
-        <div id="responseBox" class="response-box hidden">
-          <p><strong>Short Summary:</strong> <span id="shortSummary"></span></p>
-
-          <label>
-            <input type="checkbox" id="toggleExplanation" class="toggle-explanation" />
-            Explanation
-          </label>
-
-          <p id="detailedExplanation" class="hidden"></p>
-        </div>
+        <!-- Other -->
+        <label class="stock-option">
+          <input type="radio" name="stock" value="OTHER" id="radioOther" />
+          Other: <input type="text" id="otherStock" class="other-stock-input" placeholder="Enter symbol" disabled />
+        </label>
       </div>
     </div>
 
-    <script>
-      /* ----- element refs ----- */
-      const stockList          = document.getElementById('stockList');
-      const otherStockInput    = document.getElementById('otherStock');
-      const radioOther         = document.getElementById('radioOther');
-      const analyzeBtn         = document.getElementById('analyzeBtn');
-      const responseBox        = document.getElementById('responseBox');
-      const shortSummaryEl     = document.getElementById('shortSummary');
-      const detailedEl         = document.getElementById('detailedExplanation');
-      const toggleExplanation  = document.getElementById('toggleExplanation');
+    <!-- ─── Right Panel ─── -->
+    <div class="right-panel">
+      <button id="analyzeBtn" class="analyze-btn">Analyze</button>
 
-      /* enable / disable “Other” text field */
-      stockList.addEventListener('change', e => {
-        if (!e.target.matches('input[type="radio"][name="stock"]')) return;
-        const isOther = e.target.value === 'OTHER';
-        otherStockInput.disabled = !isOther;
-        if (!isOther) otherStockInput.value = '';
-      });
+      <div id="responseBox" class="response-box hidden">
+        <p><strong>Decision:</strong> <span id="decisionText"></span></p>
+        <label><input type="checkbox" id="toggleExplanation" /> Explanation</label>
+        <p id="explanationText" class="hidden"></p>
+      </div>
+    </div>
+  </div>
 
-      /* auto‑select “Other” radio when typing */
-      otherStockInput.addEventListener('input', () => {
-        radioOther.checked = true;
-        otherStockInput.disabled = false;
-      });
+  <script>
+    /* ── element refs ── */
+    const stockList       = document.getElementById('stockList');
+    const otherInput      = document.getElementById('otherStock');
+    const radioOther      = document.getElementById('radioOther');
+    const analyzeBtn      = document.getElementById('analyzeBtn');
+    const responseBox     = document.getElementById('responseBox');
+    const decisionEl      = document.getElementById('decisionText');
+    const explanationEl   = document.getElementById('explanationText');
+    const toggleExplain   = document.getElementById('toggleExplanation');
 
-      /* toggle explanation visibility */
-      toggleExplanation.addEventListener('change', e => {
-        detailedEl.classList.toggle('hidden', !e.target.checked);
-      });
+    /* enable / disable Other box */
+    stockList.addEventListener('change', e => {
+      if (!e.target.matches('input[type="radio"][name="stock"]')) return;
+      const isOther = e.target.value === 'OTHER';
+      otherInput.disabled = !isOther;
+      if (!isOther) otherInput.value = '';
+    });
 
-      /* ANALYZE */
-      analyzeBtn.addEventListener('click', async () => {
-        let stock = document.querySelector('input[name="stock"]:checked')?.value || 'Unknown Stock';
-        if (stock === 'OTHER') stock = otherStockInput.value.trim() || 'Unknown Stock';
+    /* auto‑select Other when typing */
+    otherInput.addEventListener('input', () => {
+      radioOther.checked = true;
+      otherInput.disabled = false;
+    });
 
-        try {
-          const res  = await fetch('/analyze_stock', {
-            method : 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body   : JSON.stringify({ stock })
-          });
-          const data = await res.json();
+    /* toggle visibility */
+    toggleExplain.addEventListener('change', e => {
+      explanationEl.classList.toggle('hidden', !e.target.checked);
+    });
 
-          shortSummaryEl.textContent = data.error || data.short_summary;
-          detailedEl.textContent     = data.detailed_explanation || '';
-          responseBox.classList.remove('hidden');
-          toggleExplanation.checked = false;
-          detailedEl.classList.add('hidden');
-        } catch (err) {
-          shortSummaryEl.textContent = 'Error: ' + err;
-          detailedEl.textContent     = '';
-          responseBox.classList.remove('hidden');
-        }
-      });
-    </script>
-  </body>
+    /* very small markdown converter: **bold** + newlines */
+    function mdToHtml(txt){
+      return txt
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+    }
+
+    /* ANALYZE */
+    analyzeBtn.addEventListener('click', async () => {
+      let stock = document.querySelector('input[name="stock"]:checked')?.value || 'Unknown Stock';
+      if (stock === 'OTHER') stock = otherInput.value.trim() || 'Unknown Stock';
+
+      try{
+        const res  = await fetch('/analyze_stock', {
+          method : 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body   : JSON.stringify({ stock })
+        });
+        const data = await res.json();
+
+        decisionEl.textContent    = data.error || data.decision;
+        explanationEl.innerHTML   = mdToHtml(data.explanation || '');
+        responseBox.classList.remove('hidden');
+        toggleExplain.checked = false;
+        explanationEl.classList.add('hidden');
+      }catch(err){
+        decisionEl.textContent  = 'Error: ' + err;
+        explanationEl.innerHTML = '';
+        responseBox.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
 </html>

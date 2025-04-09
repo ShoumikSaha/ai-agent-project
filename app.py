@@ -5,17 +5,18 @@ from openai import OpenAI
 app = Flask(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# ── System prompt ──────────────────────────────────────────────────────────
+# ── System prompt ──────────────────────────────────────────────────────
 SYSTEM_PROMPT = (
-    "You are a seasoned financial analyst. "
-    "For any stock to be analyzed, you use these four indicators: "
-    "Relative Strength Index (RSI), Exponential Moving Average (EMA), "
-    "Moving Average Convergence Divergence (MACD), and Volume. "
-    "You fetch the necessary data about these indicators before analyzing "
-    "and making any decision."
+    "You are a seasoned financial analyst. For any stock to be analyzed, "
+    "you use these four indicators: Relative Strength Index (RSI), "
+    "Exponential Moving Average (EMA), Moving Average Convergence "
+    "Divergence (MACD), and Volume. You fetch the necessary data about "
+    "these indicators before analyzing and making any decision. "
+    'For any stock, you provide 2 things: the decision and the explanation. '
+    'Label them exactly as "Decision:" and "Explanation:".'
 )
 
-# ── Routes ────────────────────────────────────────────────────────────────
+# ── Routes ────────────────────────────────────────────────────────────
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -27,16 +28,17 @@ def analyze_stock():
 
     USER_PROMPT = (
         "First, analyze the stock {stock} in the current situation. "
-        "Then, provide a decision for these 3 options:\n"
+        "Then, provide a decision for these 3 options with a percentage:\n"
         "1. Buy\n2. Sell\n3. Hold\n"
-        "For all these 3 options, provide a percentage. For example, if you are very sure "
+        "For example, if you are very sure "
         'about buying a stock, you can give "Buy: 80%, Sell: 10%, Hold: 10%". '
-        "Format your response accordingly. "
-        "Finally provide a reasoning and explanation for your given decision. "
-        "Label this with 'Explanation:'."
+        "Do not provide anything else with the 'Decision:'. "
+        "Finally, provide a detailed reasoning and explanation for your given decision. "
+        "Label this with 'Explanation:'. Remember, under 'Decision:', do not provide "
+        "anything else other than the decision. Any reasoning or explanation will go "
+        "with 'Explanation:'."
     ).format(stock=stock)
 
-    # --- Call GPT‑4o ---
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -47,21 +49,19 @@ def analyze_stock():
 
     full_text = response.choices[0].message.content.strip()
 
-    # --- Parse into decision block & explanation block ---------------
+    # --- Split into Decision / Explanation --------------------------------
     decision_block = full_text
     explanation_block = ""
-
     if "Explanation:" in full_text:
         decision_block, explanation_block = full_text.split("Explanation:", 1)
-        decision_block = decision_block.strip()
+        decision_block = decision_block.replace("Decision:", "").strip()
         explanation_block = explanation_block.strip()
 
     return jsonify(
-        short_summary=decision_block,        # shown immediately
-        detailed_explanation=explanation_block  # behind the toggle
+        decision=decision_block,
+        explanation=explanation_block,
     )
 
 
 if __name__ == "__main__":
-    # Local dev; Render uses gunicorn via Procfile
     app.run(host="0.0.0.0", port=5000)
