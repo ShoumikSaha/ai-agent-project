@@ -35,7 +35,7 @@ def analyze_stock():
     USER_PROMPT = (
         f"First, analyze the stock {stock} in the current situation. "
         "Then provide the decision percentages (Buy / Sell / Hold) as described. "
-        "After that, include a detailed explanation. "
+        "After that, include a detailed explanation and reasoning. The explanation should be nicely formatted, and compelling. Try to back up your decision with data. "
         "Remember to output strictly the JSON object described above—nothing else."
     )
 
